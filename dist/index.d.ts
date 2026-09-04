@@ -1,0 +1,43 @@
+/**
+ * Junie — a production-grade, developer-first Lavalink v4 client
+ * for Node.js and TypeScript.
+ *
+ * ```ts
+ * import { Junie } from 'junie';
+ *
+ * const junie = new Junie({ nodes: [...], sendToShard });
+ * junie.init(userId);
+ * ```
+ */
+export { Junie } from './Junie.js';
+export type { ResolvedJunieOptions, PlayerDefaults } from './Junie.js';
+export { Node, defaultWebSocketFactory } from './node/Node.js';
+export type { NodeHost } from './node/Node.js';
+export { NodeManager } from './node/NodeManager.js';
+export type { NodeManagerDefaults } from './node/NodeManager.js';
+export { RestManager } from './node/Rest.js';
+export type { RestDependencies, RequestOptions } from './node/Rest.js';
+export { PenaltyStrategy, DefaultPenaltyProvider } from './node/strategies/PenaltyStrategy.js';
+export { RoundRobinStrategy, LeastPlayersStrategy, LeastLoadStrategy, } from './node/strategies/index.js';
+export type { NodeSelectionStrategy, NodeSelectionContext, PenaltyProvider, } from './node/strategies/Strategy.js';
+export { Player, defaultAutoplayResolver } from './player/Player.js';
+export type { PlayOptions, PlayerLifecycle } from './player/Player.js';
+export { PlayerManager } from './player/PlayerManager.js';
+export { FilterManager } from './player/FilterManager.js';
+export { Queue, normalizeQueueInput } from './queue/Queue.js';
+export type { QueueInput } from './queue/Queue.js';
+export { MemoryQueueStore } from './queue/QueueStore.js';
+export type { QueueStore, StoredQueue } from './queue/QueueStore.js';
+export { Track, UnresolvedTrack, reviveTrackLike } from './track/Track.js';
+export type { TrackLike, TrackResolver, SerializedTrack, SerializedUnresolvedTrack, SerializedTrackLike, } from './track/Track.js';
+export { SearchResult, buildSearchIdentifier, buildSearchResult } from './track/SearchResult.js';
+export { JunieError, JunieRestError, VoiceConnectionError, TrackLoadError, JunieErrorCode, } from './errors.js';
+export { Logger, createDefaultLogger } from './utils/Logger.js';
+export { TypedEmitter } from './utils/TypedEmitter.js';
+export type { EventMap } from './utils/TypedEmitter.js';
+export { sleep, withTimeout, clamp, isUrl, hasSearchPrefix, formatDuration, createRng, shuffleInPlace, applyJitter, backoffDelay, isPlainObject, buildQueryString, } from './utils/Helpers.js';
+export { parseVoiceRegion, regionZone, regionPenalty, VOICE_ZONES, } from './utils/Regions.js';
+export type { VoiceZone } from './utils/Regions.js';
+export { JUNIE_VERSION, SOURCE_PREFIXES, DEFAULTS } from './constants.js';
+export * from './types/index.js';
+//# sourceMappingURL=index.d.ts.map
