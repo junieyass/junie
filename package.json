@@ -1,5 +1,5 @@
 {
-  "name": "junie",
+  "name": "@junieyass/junie",
   "version": "1.0.0",
   "description": "Junie — a production-grade, developer-first Lavalink v4 client for Node.js and TypeScript.",
   "type": "commonjs",
