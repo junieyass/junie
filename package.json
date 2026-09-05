@@ -45,7 +45,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/junie-labs/junie.git"
+    "url": "git+https://github.com/junieyass/junie.git"
+  },
+  "homepage": "https://github.com/junieyass/junie#readme",
+  "bugs": {
+    "url": "https://github.com/junieyass/junie/issues"
   },
   "author": "Junie Labs",
   "license": "MIT",
