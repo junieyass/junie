@@ -15,6 +15,7 @@ import {
   FakeWebSocket,
 } from './fixtures.js';
 import { Junie } from '../src/Junie.js';
+import { JUNIE_VERSION } from '../src/constants.js';
 import { RoundRobinStrategy } from '../src/node/strategies/index.js';
 import { Track } from '../src/track/Track.js';
 import { JunieErrorCode } from '../src/errors.js';
@@ -39,7 +40,7 @@ describe('Junie client', () => {
     await connectNode(socket);
     expect(junie.nodes.get('test')!.connected).toBe(true);
     expect(junie.userId).toBe('111222333444555666');
-    expect(junie.clientName).toBe('Junie/1.0.0');
+    expect(junie.clientName).toBe(`Junie/${JUNIE_VERSION}`);
   });
 
   it('requires a user id', () => {
@@ -152,7 +153,8 @@ describe('Junie client', () => {
 
     expect(result.tracks).toHaveLength(1);
     expect(result.tracks[0]!.requester).toBe(requester);
-    expect(calls[0]!.url).toContain('identifier=ytsearch%3Ahello%20world');
+    const loadCall = calls.find((call) => call.url.includes('/loadtracks'));
+    expect(loadCall!.url).toContain('identifier=ytsearch%3Ahello%20world');
   });
 
   it('searches in parallel across nodes when asked', async () => {

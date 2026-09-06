@@ -54,9 +54,14 @@ export declare class RestManager {
     private isSessionRoute;
     /** `GET /v4/loadtracks` — resolve a query / url into tracks. */
     loadTracks(identifier: string, extraQueryUrlParams?: Record<string, string>): Promise<LoadTracksResponse>;
-    /** `GET /v4/decodetrack` — decode one base64 track. */
+    /**
+     * `GET /v4/decodetrack` — decode one base64 track.
+     * (Verified against Lavalink 4.2.2: the route is `/decodetrack` and it
+     * binds both `encodedTrack` and `track` query names; we send both
+     * spellings' modern form.)
+     */
     decodeTrack(encoded: string): Promise<APITrack>;
-    /** `POST /v4/decodetracks` — decode many base64 tracks. */
+    /** `POST /v4/decodetracks` — decode many base64 tracks (JSON array body). */
     decodeTracks(encoded: string[]): Promise<APITrack[]>;
     /** `PATCH /v4/sessions/{id}` — configure resuming for this session. */
     updateSession(resuming: boolean, timeoutSeconds: number): Promise<unknown>;

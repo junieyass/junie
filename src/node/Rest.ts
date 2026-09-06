@@ -187,14 +187,19 @@ export class RestManager {
     });
   }
 
-  /** `GET /v4/decodetrack` — decode one base64 track. */
+  /**
+   * `GET /v4/decodetrack` — decode one base64 track.
+   * (Verified against Lavalink 4.2.2: the route is `/decodetrack` and it
+   * binds both `encodedTrack` and `track` query names; we send both
+   * spellings' modern form.)
+   */
   public decodeTrack(encoded: string): Promise<APITrack> {
     return this.request<APITrack>('GET', '/decodetrack', {
-      query: { track: encoded },
+      query: { encodedTrack: encoded },
     });
   }
 
-  /** `POST /v4/decodetracks` — decode many base64 tracks. */
+  /** `POST /v4/decodetracks` — decode many base64 tracks (JSON array body). */
   public decodeTracks(encoded: string[]): Promise<APITrack[]> {
     return this.request<APITrack[]>('POST', '/decodetracks', {
       body: encoded,

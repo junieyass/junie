@@ -3,9 +3,9 @@
  */
 import type { SearchSource } from './types/options.js';
 /** Junie's semantic version. */
-export declare const JUNIE_VERSION = "1.0.0";
+export declare const JUNIE_VERSION = "1.1.0";
 /** Value sent as the `Client-Name` WebSocket/REST header by default. */
-export declare const DEFAULT_CLIENT_NAME = "Junie/1.0.0";
+export declare const DEFAULT_CLIENT_NAME = "Junie/1.1.0";
 /** Default Lavalink port. */
 export declare const DEFAULT_PORT = 2333;
 /** REST base path of the Lavalink v4 API. */
@@ -23,6 +23,7 @@ export declare const DEFAULTS: {
     readonly searchParallel: false;
     readonly skipOnError: true;
     readonly autoVoiceReconnect: true;
+    readonly autoFailover: true;
     readonly voiceConnectionTimeout: 15000;
     readonly rest: {
         timeout: number;

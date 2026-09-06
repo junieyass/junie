@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FILTER_VOLUME_RANGE = exports.PLAYER_VOLUME_RANGE = exports.EQUALIZER_BAND_RANGE = exports.MAX_VOICE_RECONNECT_ATTEMPTS = exports.DESTROY_TIMEOUT = exports.DEFAULTS = exports.SOURCE_PREFIXES = exports.GATEWAY_VOICE_STATE_OPCODE = exports.WEBSOCKET_PATH = exports.REST_BASE = exports.DEFAULT_PORT = exports.DEFAULT_CLIENT_NAME = exports.JUNIE_VERSION = void 0;
 /** Junie's semantic version. */
-exports.JUNIE_VERSION = '1.0.0';
+exports.JUNIE_VERSION = '1.1.0';
 /** Value sent as the `Client-Name` WebSocket/REST header by default. */
 exports.DEFAULT_CLIENT_NAME = `Junie/${exports.JUNIE_VERSION}`;
 /** Default Lavalink port. */
@@ -29,6 +29,7 @@ exports.DEFAULTS = {
     searchParallel: false,
     skipOnError: true,
     autoVoiceReconnect: true,
+    autoFailover: true,
     voiceConnectionTimeout: 15_000,
     rest: {
         timeout: 10_000,

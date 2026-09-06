@@ -10,7 +10,7 @@ import type {
 } from './types/options.js';
 
 /** Junie's semantic version. */
-export const JUNIE_VERSION = '1.0.0';
+export const JUNIE_VERSION = '1.1.0';
 
 /** Value sent as the `Client-Name` WebSocket/REST header by default. */
 export const DEFAULT_CLIENT_NAME = `Junie/${JUNIE_VERSION}`;
@@ -41,6 +41,7 @@ export const DEFAULTS = {
   searchParallel: false,
   skipOnError: true,
   autoVoiceReconnect: true,
+  autoFailover: true,
   voiceConnectionTimeout: 15_000,
   rest: {
     timeout: 10_000,

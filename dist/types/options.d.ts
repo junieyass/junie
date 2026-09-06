@@ -178,6 +178,11 @@ export interface JunieOptions<TRequester = unknown> {
     autoplayResolver?: AutoplayResolver<TRequester>;
     /** True when the bot should be auto-destroyed after leaving voice. Default: true. */
     destroyOnVoiceLeave?: boolean;
+    /**
+     * Automatically migrate players off a node whose WebSocket died onto the
+     * best remaining connected node. Default: true.
+     */
+    autoFailover?: boolean;
     /** Resume / reconnect / REST behaviour (client-wide defaults). */
     resume?: Partial<ResumeOptions>;
     reconnect?: Partial<ReconnectOptions>;

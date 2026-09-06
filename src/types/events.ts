@@ -88,6 +88,11 @@ export interface NodeEvents {
   destroy: (node: Node) => void;
   /** Internal: the REST layer hit a 404 for our own session. */
   sessionInvalid: (node: Node) => void;
+  /**
+   * The server reported a Lavalink version whose major differs from the
+   * version Junie targets (protocol-drift early warning).
+   */
+  versionMismatch: (node: Node, info: { version: string; expected: number }) => void;
   raw: (node: Node, payload: WebSocketPayload) => void;
 }
 

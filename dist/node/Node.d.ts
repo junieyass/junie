@@ -69,6 +69,14 @@ export declare class Node {
     stats: NodeStats | null;
     /** When the last stats op was received (epoch ms). */
     lastStatsUpdate: number;
+    /** Lavalink server version, detected after `ready` (e.g. "4.0.8"). */
+    lavalinkVersion: string | null;
+    /**
+     * Expected Lavalink major version. Bumped when Junie gains support for a
+     * new protocol major. Mismatches emit `versionMismatch` and log a warning
+     * but never break the connection — Junie stays forward/backward tolerant.
+     */
+    readonly expectedLavalinkMajor = 4;
     private readonly host;
     private readonly logger;
     private readonly events;
@@ -106,6 +114,14 @@ export declare class Node {
     private handleClose;
     private handleError;
     private scheduleReconnect;
+    /**
+     * Ask the server for its version (`GET /version`), remember it, and emit
+     * `versionMismatch` when the major does not match expectations. This is
+     * Junie's early-warning radar for protocol drift: when Lavalink ships a
+     * new protocol version, node versions in your logs make the upgrade path
+     * obvious before anything misbehaves.
+     */
+    detectVersion(): Promise<string | null>;
     /**
      * Search / load tracks on this node.
      *

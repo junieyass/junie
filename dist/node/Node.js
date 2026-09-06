@@ -61,6 +61,14 @@ class Node {
     stats = null;
     /** When the last stats op was received (epoch ms). */
     lastStatsUpdate = 0;
+    /** Lavalink server version, detected after `ready` (e.g. "4.0.8"). */
+    lavalinkVersion = null;
+    /**
+     * Expected Lavalink major version. Bumped when Junie gains support for a
+     * new protocol major. Mismatches emit `versionMismatch` and log a warning
+     * but never break the connection — Junie stays forward/backward tolerant.
+     */
+    expectedLavalinkMajor = 4;
     host;
     logger;
     events = new node_events_1.EventEmitter();
@@ -270,6 +278,7 @@ class Node {
             }
         }
         this.infoCache = null; // Node may have upgraded/restarted between sessions.
+        void this.detectVersion(); // fire-and-forget; never blocks the session.
         this.logger.info(this.resumed ? `Session resumed (${this.sessionId}).` : `Connected with new session ${this.sessionId}.`);
         this.emitEvent('connect', this);
         if (this.resumed)
@@ -324,6 +333,34 @@ class Node {
             this.reconnectTimer = null;
             this.connect();
         }, delay);
+    }
+    /**
+     * Ask the server for its version (`GET /version`), remember it, and emit
+     * `versionMismatch` when the major does not match expectations. This is
+     * Junie's early-warning radar for protocol drift: when Lavalink ships a
+     * new protocol version, node versions in your logs make the upgrade path
+     * obvious before anything misbehaves.
+     */
+    async detectVersion() {
+        if (this.destroyed)
+            return null;
+        try {
+            const version = (await this.rest.getVersion()).trim();
+            this.lavalinkVersion = version || null;
+            if (version && !version.startsWith(`${this.expectedLavalinkMajor}.`)) {
+                this.logger.warn(`Lavalink server reports version "${version}" — Junie targets v4. ` +
+                    'Proceeding, but verify protocol compatibility (see PROTOCOL.md).');
+                this.emitEvent('versionMismatch', this, { version, expected: this.expectedLavalinkMajor });
+            }
+            else if (version) {
+                this.logger.debug(`Lavalink version detected: ${version}`);
+            }
+            return this.lavalinkVersion;
+        }
+        catch {
+            // `/version` is best-effort (older servers may not expose it).
+            return null;
+        }
     }
     // -------------------------------------------------------------------------
     // Search

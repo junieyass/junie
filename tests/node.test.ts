@@ -10,11 +10,13 @@ import {
   makeApiTrack,
   createFetchStub,
   jsonResponse,
+  textResponse,
   resetSockets,
   fakeWebSocketFactory,
   FakeWebSocket,
 } from './fixtures.js';
 import { Junie } from '../src/Junie.js';
+import { JUNIE_VERSION } from '../src/constants.js';
 import type { APIPlayer } from '../src/types/api.js';
 
 describe('Node', () => {
@@ -33,7 +35,7 @@ describe('Node', () => {
     expect(socket.headers).toMatchObject({
       Authorization: 'youshallnotpass',
       'User-Id': '111222333444555666',
-      'Client-Name': 'Junie/1.0.0',
+      'Client-Name': `Junie/${JUNIE_VERSION}`,
     });
     expect(socket.headers['Session-Id']).toBeUndefined();
 
@@ -52,6 +54,43 @@ describe('Node', () => {
     expect(resumeCall).toBeDefined();
     expect(resumeCall!.method).toBe('PATCH');
     expect(resumeCall!.body).toEqual({ resuming: true, timeout: 60 });
+  });
+
+  it('detects the Lavalink version after ready', async () => {
+    const { fetch, calls } = createFetchStub(() => textResponse('4.0.8'));
+    vi.stubGlobal('fetch', fetch);
+    const { junie, socket } = createTestClient();
+    await connectNode(socket);
+    const node = junie.nodes.get('test')!;
+
+    await vi.waitFor(() => expect(node.lavalinkVersion).toBe('4.0.8'));
+    expect(calls.some((call) => call.url === 'http://localhost:2333/version')).toBe(true);
+  });
+
+  it('emits versionMismatch when the server major differs', async () => {
+    const { fetch } = createFetchStub(() => textResponse('3.7.13'));
+    vi.stubGlobal('fetch', fetch);
+    const { junie, socket } = createTestClient();
+    const node = junie.nodes.get('test')!;
+
+    const mismatches: Array<{ version: string; expected: number }> = [];
+    node.on('versionMismatch', (_node, info) => mismatches.push(info));
+
+    await connectNode(socket);
+    await vi.waitFor(() => expect(node.lavalinkVersion).toBe('3.7.13'));
+
+    expect(mismatches).toEqual([{ version: '3.7.13', expected: 4 }]);
+  });
+
+  it('survives servers without a /version route', async () => {
+    const { fetch } = createFetchStub(() => jsonResponse({}, 404));
+    vi.stubGlobal('fetch', fetch);
+    const { junie, socket } = createTestClient();
+    await connectNode(socket);
+    const node = junie.nodes.get('test')!;
+
+    await expect(node.detectVersion()).resolves.toBe(null);
+    expect(node.connected).toBe(true);
   });
 
   it('sends the previous Session-Id header when reconnecting', async () => {
@@ -170,7 +209,8 @@ describe('Node', () => {
     const result = await node.search({ query: 'hello', source: 'soundcloud' });
     expect(result.tracks).toHaveLength(1);
     expect(result.tracks[0]!.title).toBe('Result');
-    expect(calls[0]!.url).toContain('identifier=scsearch%3Ahello');
+    const loadCall = calls.find((call) => call.url.includes('/loadtracks'));
+    expect(loadCall!.url).toContain('identifier=scsearch%3Ahello');
   });
 
   it('caches node info and lists plugins', async () => {

@@ -39,6 +39,7 @@ function resolveOptions(raw) {
         skipOnError: raw.skipOnError ?? constants_js_1.DEFAULTS.skipOnError,
         autoVoiceReconnect: raw.autoVoiceReconnect ?? constants_js_1.DEFAULTS.autoVoiceReconnect,
         destroyOnVoiceLeave: raw.destroyOnVoiceLeave ?? true,
+        autoFailover: raw.autoFailover ?? constants_js_1.DEFAULTS.autoFailover,
         voiceConnectionTimeout: raw.voiceConnectionTimeout ?? constants_js_1.DEFAULTS.voiceConnectionTimeout,
         autoplayResolver: raw.autoplayResolver,
         reconnect: { ...constants_js_1.DEFAULTS.reconnect, ...raw.reconnect },
@@ -253,6 +254,41 @@ class Junie extends TypedEmitter_js_1.TypedEmitter {
     /** @internal */
     notifyDisconnect(node, code, reason) {
         this.emitClient('nodeDisconnect', node, { code, reason });
+        if (this.options.autoFailover)
+            void this.failoverPlayers(node);
+    }
+    /**
+     * Move every player of a just-disconnected node onto the best remaining
+     * connected node (live migration: voice + track + position + filters are
+     * re-established on the target before the old player is destroyed).
+     *
+     * When no other node is connected, migration is skipped — the node's own
+     * reconnect (and the `reinitialize()` that follows a fresh session) takes
+     * care of recovery.
+     */
+    async failoverPlayers(from) {
+        const players = this.players.listByNode(from.id);
+        if (players.length === 0)
+            return;
+        let target;
+        try {
+            target = this.nodes.best({ exclude: new Set([from.id]) });
+        }
+        catch {
+            this.logger.info(`Node "${from.id}" died with ${players.length} player(s) and no failover target — awaiting its reconnect.`);
+            return;
+        }
+        this.logger.warn(`Node "${from.id}" died — migrating ${players.length} player(s) to "${target.id}".`);
+        for (const player of players) {
+            if (player.lifecycle === 'destroyed' || player.lifecycle === 'destroying')
+                continue;
+            try {
+                await player.setNode(target);
+            }
+            catch (error) {
+                this.logger.warn(`Failover of guild ${player.guildId} to "${target.id}" failed: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
     }
     /** @internal */
     notifyError(node, error) {

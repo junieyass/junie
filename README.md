@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Lavalink](https://img.shields.io/badge/Lavalink-v4-FF5C00?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAxNiAxNiI+PGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjciIGZpbGw9IiNGRjVDMDAiLz48L3N2Zz4)](https://lavalink.dev)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Tests](https://img.shields.io/badge/tests-111%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-116%20passing-brightgreen)](#testing)
 
 [Quick start](#quick-start) · [Documentation](./docs) · [Examples](./examples) · [API tour](#api-tour)
 
@@ -67,11 +67,38 @@ That's a working music command. Everything below is what makes Junie *production
 | | Junie |
 |---|---|
 | **Protocol** | Complete Lavalink v4: REST player control, WebSocket events, session resuming, DAVE-ready voice payloads (`channelId` always forwarded) |
-| **Reliability** | Exponential backoff with jitter, session-404 self-healing, voice self-rejoin, **zombie-proof player destruction** (a dead node can never wedge a guild) |
+| **Reliability** | Exponential backoff with jitter, session-404 self-healing, voice self-rejoin, **automatic player failover** — a dead node means live players migrate to the healthiest node, not wedged guilds — and **zombie-proof player destruction** |
 | **Scale** | Penalty-based load balancing (players · CPU · frame loss · region), region-aware node placement, parallel search fan-out to defeat upstream rate limits |
 | **DX** | Fully typed events, requester typing that flows through tracks → queues → players, fluent filter chains, one-call presets |
 | **Queue** | Repeat modes, bounded history, shuffle/move/jump, autoplay, pluggable persistence (Redis/Postgres/...) with `UnresolvedTrack` lazy resolution |
 | **Ops** | Leveled structured logging, raw-payload event for telemetry, per-node stats, custom WebSocket transport for proxies |
+
+## How Junie compares
+
+An honest, at-the-time-of-writing view of the Lavalink wrapper landscape. Respect to every
+project listed — Junie exists because their ideas set the bar. Verify maintenance status
+yourself before choosing; it changes fast.
+
+| | Junie | Shoukaku | erela.js | Moonlink.js | Wavelink | Mafic / Pomice |
+|---|---|---|---|---|---|---|
+| Language | TS (strict) | TS | JS | TS | Python | Python |
+| Lavalink v4 | Full (WS + REST) | Full | Partial | Full | v3 (v4 in v3) | v4 |
+| Library-agnostic | **Any** (2 callbacks) | Connectors | discord.js | Multiple | discord.py | discord.py |
+| Built-in queue + repeat | Yes | No | Yes | Yes | Yes | Partial |
+| Session resuming | Yes + 404 self-heal | Yes | No | Yes | No | No |
+| Live player migration | Yes | No | No | No | No | No |
+| Search fan-out across nodes | Yes | No | No | No | No | No |
+| Filter presets + validation | Yes | Raw | Raw | Partial | Raw | Raw |
+| Queue persistence adapters | Yes | — | — | — | — | — |
+| Test suite | **116 green tests** + 29-check e2e + real-server suite | Small | Minimal | Minimal | Minimal | Minimal |
+| Real-Lavalink verification | **Yes** (in-repo, 4.2.2) | No | No | No | No | No |
+| Runtime deps | 1 (`ws`) | 1 (`ws`) | 1 (`ws`) | 2 | several | several |
+
+Where competitors still lead: Shoukaku and Wavelink have years of community, tutorials,
+stack-overflow answers and real-world battle scars. That moat is not code — it is time and
+people, and it cannot be cloned in a release. If you want the safest ecosystem bet today,
+pick the wrapper your community already uses. If you want the best-engineered core and are
+willing to file the first issues, Junie earns its keep.
 
 ## Feature tour
 
@@ -280,18 +307,30 @@ routing, state synchronization and the failure modes Junie defends against.
 | [Errors](./docs/errors.md) | Error hierarchy, codes, recovery guidance |
 | [Troubleshooting](./docs/troubleshooting.md) | Common pitfalls and their fixes |
 
-Runnable examples: [discord.js music bot](./examples/discordjs) · [custom-shard bot](./examples/custom-shard)
+Runnable examples: [discord.js music bot](./examples/discordjs) · [custom-shard bot](./examples/custom-shard) · [battle-bot with dry-run validation](./examples/battle-bot)
+
+Also in the repo: **[PROTOCOL.md](./PROTOCOL.md)** — every Lavalink op and REST route mapped
+ to the code that speaks it, a three-level verification ladder, and an upgrade runbook for
+ new Lavalink releases; **[PUBLISH.md](./PUBLISH.md)** — the release & launch runbook; and
+ **[site/index.html](./site/index.html)** — a zero-dependency landing page for GitHub Pages.
 
 ## Testing
 
 ```bash
-npm test        # 111 unit & behavioural tests — no Lavalink server required
-npm run build   # dual CJS + ESM output
+npm test              # 116 unit & behavioural tests — no Lavalink server required
+node scripts/e2e.mjs  # 29-check battle test: real sockets against a fake Lavalink v4
+node scripts/real-smoke.mjs  # optional: 12 checks against a REAL Lavalink jar (needs Java)
+npm run build         # dual CJS + ESM output
 ```
 
-The suite covers queue semantics, filter validation, penalty math, REST retry/timeout/404
-behaviour, WebSocket reconnection with backoff, session-loss rebuilding, voice self-healing,
-autoplay, node migration and zombie-proof destruction.
+The verification ladder has three levels. **V1** (unit) covers queue semantics, filter
+validation, penalty math, REST retry/timeout/404 behaviour, WebSocket reconnection with
+backoff, session-loss rebuilding, voice self-healing, autoplay, node migration, auto-failover
+and zombie-proof destruction with exact payload shapes. **V2** (e2e) drives the *built
+artifact* through a complete lifecycle over real TCP — including node kill → player
+failover → session resume. **V3** (real server) boots an actual Lavalink 4.2.2 jar and
+round-trips every REST route with real encoded tracks — the level that caught the decode
+route naming trap documented in [PROTOCOL.md](./PROTOCOL.md).
 
 ## Project principles
 

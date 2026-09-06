@@ -531,4 +531,69 @@ describe('Player resilience', () => {
     const oldDeleted = context.calls.find((c) => c.url.includes('/sessions/s1/players/g1') && c.method === 'DELETE');
     expect(oldDeleted).toBeDefined();
   });
+
+  it('auto-failover: migrates players when their node dies (default on)', async () => {
+    const context = await setup({ twoNodes: true });
+    await joinVoice(context);
+    const track = new Track(makeApiTrack('Failover'));
+    context.player.queue.add(track);
+    await context.player.play();
+
+    // Bring the second node online so a failover target exists.
+    const socket2 = FakeWebSocket.instances[1]!;
+    socket2.open();
+    socket2.message({ op: 'ready', resumed: false, sessionId: 's2' });
+    await flush();
+
+    // Node 1 dies without a close handshake (1006, abnormal).
+    context.socket.emitClose(1006, 'node crashed');
+
+    await flush();
+    await flush();
+
+    expect(context.player.lifecycle).not.toBe('destroyed');
+    expect(context.player.node.id).toBe('n2');
+    const migrated = context.calls.find((c) => c.url.includes('/sessions/s2/players/g1'));
+    expect(migrated).toBeDefined();
+    expect(migrated?.body).toMatchObject({
+      voice: expect.objectContaining({ token: 'token-1' }),
+      track: { encoded: track.encoded },
+    });
+  });
+
+  it('auto-failover can be disabled', async () => {
+    const { fetch, calls } = createFetchStub(() => jsonResponse({ guildId: 'g1' } as APIPlayer));
+    vi.stubGlobal('fetch', fetch);
+    resetSockets();
+    const sendToShard = vi.fn(async () => undefined);
+    const junie = new Junie({
+      nodes: [
+        { id: 'n1', host: 'localhost', port: 1, authorization: 'x' },
+        { id: 'n2', host: 'localhost', port: 2, authorization: 'x' },
+      ],
+      sendToShard,
+      logLevel: 'silent',
+      webSocketFactory: fakeWebSocketFactory,
+      resume: { enabled: false },
+      reconnect: { initialDelay: 10_000, jitter: false, retries: 3 },
+      autoFailover: false,
+    });
+    junie.init('111');
+    const socket = FakeWebSocket.instances[0]!;
+    await connectNode(socket, { sessionId: 's1' });
+    const socket2 = FakeWebSocket.instances[1]!;
+    socket2.open();
+    socket2.message({ op: 'ready', resumed: false, sessionId: 's2' });
+    await flush();
+
+    const player = junie.createPlayer({ guildId: 'g1', voiceChannelId: 'vc1' });
+    socket.emitClose(1006, 'node crashed');
+    await flush();
+    await flush();
+
+    expect(player.node.id).toBe('n1');
+    const migrated = calls.find((c) => c.url.includes('/sessions/s2/players/g1'));
+    expect(migrated).toBeUndefined();
+    await junie.destroy();
+  });
 });

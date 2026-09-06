@@ -45,6 +45,11 @@ export interface ResolvedJunieOptions<TRequester = unknown> {
     skipOnError: boolean;
     autoVoiceReconnect: boolean;
     destroyOnVoiceLeave: boolean;
+    /**
+     * Automatically migrate players off a node whose WebSocket died onto the
+     * best remaining connected node. Default: true.
+     */
+    autoFailover: boolean;
     voiceConnectionTimeout: number;
     autoplayResolver?: JunieOptions<TRequester>['autoplayResolver'];
     reconnect: ResolvedReconnectOptions;
@@ -135,6 +140,16 @@ export declare class Junie<TRequester = unknown> extends TypedEmitter<JunieEvent
     notifyEvent(node: Node, event: LavalinkEvent): void;
     /** @internal */
     notifyDisconnect(node: Node, code: number, reason: string): void;
+    /**
+     * Move every player of a just-disconnected node onto the best remaining
+     * connected node (live migration: voice + track + position + filters are
+     * re-established on the target before the old player is destroyed).
+     *
+     * When no other node is connected, migration is skipped — the node's own
+     * reconnect (and the `reinitialize()` that follows a fresh session) takes
+     * care of recovery.
+     */
+    private failoverPlayers;
     /** @internal */
     notifyError(node: Node, error: Error): void;
     /** @internal */
